@@ -3,6 +3,9 @@ import { ApiError } from '../utils/ApiError.js'
 import { User } from '../models/user.model.js'
 import {uploadOnCloudinary} from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
+import path from 'path'
+import fs from "fs";
+// filepath: c:\Users\armaa\OneDrive\Desktop\ChaiBackend\src\controllers\user.controller.js
 
 const registerUser = asyncHandler( async (req, res) => {
     // get user details from frontend
@@ -14,7 +17,7 @@ const registerUser = asyncHandler( async (req, res) => {
     // remove password and refresh token field from response
     // check for user creation
     // return res
-
+    // console.log("req.files:", req.files);
 
     const {fullName, email, username, password } = req.body
     //console.log("email: ", email);
@@ -34,21 +37,30 @@ const registerUser = asyncHandler( async (req, res) => {
     }
     //console.log(req.files);
 
-    const avatarLocalPath = req.files?.avatar[0]?.path;
-    //const coverImageLocalPath = req.files?.coverImage[0]?.path;
-
-    let coverImageLocalPath;
-    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
-        coverImageLocalPath = req.files.coverImage[0].path
-    }
+    let avatarLocalPath = req.files?.avatar?.[0]?.path;
+    let coverImageLocalPath = req.files?.coverImage?.[0]?.path;
     
 
+    if (avatarLocalPath) {
+        avatarLocalPath = path.resolve(avatarLocalPath);
+    }
+    if (coverImageLocalPath) {
+        coverImageLocalPath = path.resolve(coverImageLocalPath);
+    }
+
+    
+    // if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+    //     coverImageLocalPath = req.files.coverImage[0].path
+    // }
+    
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar file is required")
     }
-
+    
+    
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+    console.log("coverImage upload result:", coverImage);
 
     if (!avatar) {
         throw new ApiError(400, "Avatar file is required")
