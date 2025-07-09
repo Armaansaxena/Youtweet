@@ -7,12 +7,12 @@ import {
     getUserPlaylists,
     removeVideoFromPlaylist,
     updatePlaylist,
-} from "../controllers/playlist.controllers.js"
-import {userAuth} from "../middlewares/auth.middleware.js"
+} from "../controllers/playlist.controller.js"
+import {verifyJWT} from "../middlewares/auth.middleware.js"
 
 const router = Router();
 
-router.use(userAuth); // Apply userAuth middleware to all routes in this file
+router.use(verifyJWT); // Apply userAuth middleware to all routes in this file
 
 router.route("/").post(createPlaylist)
 

@@ -1,8 +1,16 @@
 import { Router } from 'express';
-import { healthcheck } from "../controllers/healthcheck.controllers.js"
+import {
+    getChannelStats,
+    getChannelVideos,
+} from "../controllers/dashboard.controller.js"
+import {verifyJWT} from "../middlewares/auth.middleware.js"
+
 
 const router = Router();
 
-router.route('/').get(healthcheck);
+router.use(verifyJWT); // Apply userAuth middleware to all routes in this file
+
+router.route("/stats").get(getChannelStats);
+router.route("/videos").get(getChannelVideos);
 
 export default router
