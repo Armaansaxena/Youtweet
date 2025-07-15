@@ -1,2 +1,2 @@
-# Chai aur Backend series 
-This is a video series on backend with javascript 
+# Youtweet is a backend application
+In this project There is the backend of the project.
