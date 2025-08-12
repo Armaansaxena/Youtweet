@@ -8,7 +8,7 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 const createTweet = asyncHandler(async (req, res) => {
     //TODO: create tweet
     const { content } = req.body;
-    if (!content || content.trim()) {
+    if (!content || !content.trim()) {
         throw new ApiError(400, "Can not add a blank tweet")
     }
     const tweet = await Tweet.create({
@@ -39,7 +39,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
             }
         },
         {
-            $sort: {
+            $lookup: {
                 from: "users",
                 foreignField: "_id",
                 localField: "owner",
@@ -102,8 +102,8 @@ const updateTweet = asyncHandler(async (req, res) => {
     }
 
     const { content } = req.body
-    if (!content || content.trim()) {
-        throw new ApiError(400, "Content not be empty")
+    if (!content || !content.trim()) {
+        throw new ApiError(400, "Content should not be empty")
     }
     existingTweet.content = content.trim()
     await existingTweet.save();

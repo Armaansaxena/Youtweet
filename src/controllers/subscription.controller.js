@@ -44,106 +44,142 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 
 // controller to return subscriber list of a channel
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
-    const {channelId} = req.params;
-    if(!channelId){
-        throw new ApiError(400 , "channel id is required");
-    }
-    const isChannelExist = await User.exists({_id : channelId});
-    if(!isChannelExist){
-        throw new ApiError(404 , "channel not found with this channel id");
-    }
-    const subscriberList = await Subscription.aggregate([{
-        $match:{
-            channel: new mongoose.Types.ObjectId(channelId)
-        }
-    },{
-        $lookup:{
-            from: "users",
-            localField: "subscriber",
-            foreignField: "_id",
-            as: "subscriberInfo",
-            pipeline:[
-                {
-                    $project:{
-                        username: 1,
-                        fullName: 1,
-                        avatar: 1
-                    }
-                }
-            ]
-        }
-    },{
-        $unwind:{
-            path: "$subscriberInfo",
-            preserveNullAndEmptyArrays: true
-        }
-    },{
-        $addFields:{
-            username: "$subscriberInfo.username",
-            fullName: "$subscriberInfo.fullName",
-            avatar: "$subscriberInfo.avatar"
-        }
-    },{
-        $project:{
-            username: 1,
-            fullName: 1,
-            avatar: 1
-        }
-    }])
+    const { subscriberId } = req.params;
 
-    return res.status(200).json(new ApiResponse(200 , {subscriber: subscriberList} , "all subscriber details of the given channel are fetched successfully"))
-})
+    if (!subscriberId) {
+        throw new ApiError(400, "Subscriber ID is required");
+    }
+
+    const isSubscriberExist = await User.exists({ _id: subscriberId });
+    if (!isSubscriberExist) {
+        throw new ApiError(404, "Subscriber not found with this ID");
+    }
+
+    const subscriptions = await Subscription.aggregate([
+        {
+            $match: {
+                subscriber: new mongoose.Types.ObjectId(subscriberId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "channel",
+                foreignField: "_id",
+                as: "channelInfo",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind: {
+                path: "$channelInfo",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $addFields: {
+                username: "$channelInfo.username",
+                fullName: "$channelInfo.fullName",
+                avatar: "$channelInfo.avatar"
+            }
+        },
+        {
+            $project: {
+                username: 1,
+                fullName: 1,
+                avatar: 1
+            }
+        }
+    ]);
+
+    return res.status(200).json(
+        new ApiResponse(200, { subscriptions }, "Subscribed channels fetched successfully")
+    );
+});
+
 
 // controller to return channel list to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
-    const { subscriberId } = req.params
-    if(!subscriberId){
-        throw new ApiError(400 , "subscriber id is required");
-    }
-    if(!isSubscriberExist){
-        throw new ApiError(404 , "subscriber not found with this subscriber id");
-    }
-    const channelList = await Subscription.aggregate([{
-        $match:{
-            subscriber: new mongoose.Types.ObjectId(subscriberId)
-        }
-    },{
-        $lookup:{
-            from: "users",
-            localField: "channel",
-            foreignField: "_id",
-            as: "channelInfo",
-            pipeline:[
-                {
-                    $project:{
-                        username: 1,
-                        fullName: 1,
-                        avatar: 1
-                    }
-                }
-            ]
-        }
-    },{
-        $unwind:{
-            path: "$channelInfo",
-            preserveNullAndEmptyArrays: true
-        }
-    },{
-        $addFields:{
-            username: "$channelInfo.username",
-            fullName: "$channelInfo.fullName",
-            avatar: "$channelInfo.avatar"
-        }
-    },{
-        $project:{
-            username: 1,
-            fullName: 1,
-            avatar: 1
-        }
-    }])
+    const { subscriberId } = req.params;
 
-    return res.status(200).json(new ApiResponse(200 , {subscriber: channelList} , "all channel details subscribed by the subscriber are fetched successfully"))
-})
+    if (!subscriberId) {
+        throw new ApiError(400, "subscriber id is required");
+    }
+
+    const isSubscriberExist = await User.exists({ _id: subscriberId });
+
+    if (!isSubscriberExist) {
+        return res.status(200).json(
+        new ApiResponse(
+            200,
+            { subscriber: [] },
+            "No subscriptions found for this subscriber id"
+        )
+    );
+    }
+
+    const channelList = await Subscription.aggregate([
+        {
+            $match: {
+                subscriber: new mongoose.Types.ObjectId(subscriberId),
+            },
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "channel",
+                foreignField: "_id",
+                as: "channelInfo",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1,
+                        },
+                    },
+                ],
+            },
+        },
+        {
+            $unwind: {
+                path: "$channelInfo",
+                preserveNullAndEmptyArrays: true,
+            },
+        },
+        {
+            $addFields: {
+                username: "$channelInfo.username",
+                fullName: "$channelInfo.fullName",
+                avatar: "$channelInfo.avatar",
+            },
+        },
+        {
+            $project: {
+                username: 1,
+                fullName: 1,
+                avatar: 1,
+            },
+        },
+    ]);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { subscriber: channelList },
+            "all channel details subscribed by the subscriber are fetched successfully"
+        )
+    );
+});
+
 
 export {
     toggleSubscription,
